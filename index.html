@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>やりたい仕事分析AI</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0d0b09">
+<style>
+body{
+margin:0;
+font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+background:#0d0b09;
+color:white;
+padding:18px;
+background-image:radial-gradient(circle at top,#3a2b11,#0d0b09 55%);
+}
+.container{max-width:560px;margin:auto;}
+.card{
+background:#17120d;
+border:1px solid #d6b35a55;
+border-radius:24px;
+padding:18px;
+margin-bottom:18px;
+}
+h1{color:#d6b35a;font-size:32px;margin-bottom:4px;}
+.sub{opacity:.75;line-height:1.6;margin-bottom:18px;}
+.topButtons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+button{
+border:none;
+border-radius:18px;
+padding:16px;
+font-weight:bold;
+font-size:16px;
+background:#d6b35a;
+color:#111;
+width:100%;
+}
+.secondary{background:#2a2116;color:white;}
+.question{font-size:20px;margin-bottom:12px;}
+.badge{
+display:inline-block;
+padding:8px 12px;
+border-radius:999px;
+background:#2b2112;
+margin:6px 6px 0 0;
+border:1px solid #d6b35a55;
+font-size:14px;
+}
+input{
+width:100%;
+padding:14px;
+border-radius:16px;
+background:#111;
+color:white;
+border:1px solid #444;
+box-sizing:border-box;
+font-size:16px;
+margin-bottom:14px;
+}
+.jobCard{
+background:#21180f;
+padding:14px;
+border-radius:18px;
+margin-bottom:12px;
+}
+.small{opacity:.7;font-size:13px;line-height:1.5;}
+.hidden{display:none;}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🧠 やりたい仕事分析AI</h1>
+<div class="sub">
+性格・快感特性・働き方傾向から、自分に合う仕事を分析。
+</div>
+
+<div class="topButtons">
+<button onclick="showSection('quiz')">診断開始</button>
+<button class="secondary" onclick="showSection('jobs')">職業一覧</button>
+</div>
+
+<div id="quizSection" class="card">
+<div class="question">Q. 一番テンションが上がる瞬間は？</div>
+
+<button onclick="setType('strategy')">戦略を考えている時</button>
+<button onclick="setType('people')">人と話している時</button>
+<button onclick="setType('creative')">アイデアを作る時</button>
+<button onclick="setType('solo')">一人で没頭している時</button>
+
+<div id="result" class="hidden" style="margin-top:20px;">
+<h2 style="color:#d6b35a;">分析結果</h2>
+<div id="type"></div>
+<div id="jobsResult"></div>
+<div class="small" id="comment"></div>
+</div>
+</div>
+
+<div id="jobsSection" class="card hidden">
+<h2 style="color:#d6b35a;">職業一覧</h2>
+<div class="small" style="margin-bottom:12px;">
+営業・企画・IT・マーケなど中分類ベースで掲載
+</div>
+
+<input type="text" id="search" placeholder="職業を検索" onkeyup="renderJobs()">
+
+<div id="jobList"></div>
+</div>
+
+</div>
+
+<script>
+
+const jobs = [{"name": "法人営業", "cat": "営業", "fit": "対人・競争", "stress": "数字プレッシャー", "style": "裁量大きめ"}, {"name": "営業企画", "cat": "企画", "fit": "戦略・分析", "stress": "調整業務", "style": "チーム連携"}, {"name": "Webマーケター", "cat": "マーケ", "fit": "分析・改善", "stress": "成果変動", "style": "自由度高い"}, {"name": "SNS運用", "cat": "クリエイティブ", "fit": "発信・企画", "stress": "炎上リスク", "style": "トレンド重視"}, {"name": "UI/UXデザイナー", "cat": "IT", "fit": "創造・観察", "stress": "修正依頼", "style": "集中型"}, {"name": "データアナリスト", "cat": "IT", "fit": "分析・論理", "stress": "細かさ", "style": "静かな環境"}, {"name": "プロダクトマネージャー", "cat": "IT", "fit": "戦略・調整", "stress": "責任範囲", "style": "裁量型"}, {"name": "イベントプランナー", "cat": "企画", "fit": "人・企画", "stress": "突発対応", "style": "スピード感"}, {"name": "人事採用", "cat": "人事", "fit": "対人・観察", "stress": "採用目標", "style": "会話多め"}, {"name": "カスタマーサクセス", "cat": "営業", "fit": "支援・改善", "stress": "クレーム", "style": "伴走型"}, {"name": "エンジニア", "cat": "IT", "fit": "没頭・構築", "stress": "仕様変更", "style": "集中環境"}, {"name": "研究職", "cat": "研究", "fit": "探求・論理", "stress": "成果不確定", "style": "静かな環境"}, {"name": "看護師", "cat": "医療", "fit": "支援・責任", "stress": "体力負荷", "style": "チーム"}, {"name": "教師", "cat": "教育", "fit": "育成・共感", "stress": "保護者対応", "style": "人中心"}, {"name": "動画編集", "cat": "クリエイティブ", "fit": "表現・没頭", "stress": "納期", "style": "自由"}, {"name": "商品企画", "cat": "企画", "fit": "発想・戦略", "stress": "プレッシャー", "style": "アイデア重視"}, {"name": "経理", "cat": "事務", "fit": "正確性", "stress": "ミス許容低い", "style": "安定"}, {"name": "広報", "cat": "マーケ", "fit": "発信・対人", "stress": "炎上", "style": "トレンド"}, {"name": "コンサル", "cat": "戦略", "fit": "分析・提案", "stress": "長時間", "style": "高成果"}, {"name": "店舗運営", "cat": "サービス", "fit": "現場・調整", "stress": "人手不足", "style": "現場型"}];
+
+function showSection(type){
+if(type === 'jobs'){
+document.getElementById('jobsSection').classList.remove('hidden');
+window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+}
+if(type === 'quiz'){
+window.scrollTo({top:0,behavior:'smooth'});
+}
+}
+
+function renderJobs(){
+const keyword = document.getElementById('search').value.toLowerCase();
+const area = document.getElementById('jobList');
+
+area.innerHTML = '';
+
+jobs
+.filter(j => 
+j.name.toLowerCase().includes(keyword) ||
+j.cat.toLowerCase().includes(keyword)
+)
+.forEach(j => {
+area.innerHTML += `
+<div class="jobCard">
+<div style="font-size:18px;font-weight:bold;">${j.name}</div>
+<div class="badge">${j.cat}</div>
+<div class="badge">向いてる人：${j.fit}</div>
+<div class="badge">働き方：${j.style}</div>
+<div class="badge">ストレス：${j.stress}</div>
+</div>
+`;
+});
+}
+
+function setType(type){
+let title = '';
+let fitJobs = [];
+let comment = '';
+
+if(type === 'strategy'){
+title = '戦略分析型';
+fitJobs = ['営業企画','事業企画','コンサル','PM'];
+comment = 'あなたは「考えて改善する」ことで快感を得やすいタイプです。';
+}
+
+if(type === 'people'){
+title = '対人影響型';
+fitJobs = ['営業','人事','イベント','接客'];
+comment = 'あなたは人との関わりでエネルギーが上がるタイプです。';
+}
+
+if(type === 'creative'){
+title = '創造爆発型';
+fitJobs = ['SNS','広告','商品企画','動画編集'];
+comment = '新しい発想や表現を作ることで力を発揮しやすいです。';
+}
+
+if(type === 'solo'){
+title = '専門没頭型';
+fitJobs = ['研究','分析','エンジニア','デザイン'];
+comment = '一人で深く集中できる環境で強みが出やすいタイプです。';
+}
+
+document.getElementById('type').innerHTML =
+`<div class="badge">${title}</div>`;
+
+document.getElementById('jobsResult').innerHTML =
+fitJobs.map(j=>`<div class="badge">${j}</div>`).join('');
+
+document.getElementById('comment').innerText = comment;
+
+document.getElementById('result').classList.remove('hidden');
+
+localStorage.setItem('lastResult', title);
+}
+
+renderJobs();
+
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('./sw.js');
+}
+
+</script>
+</body>
+</html>
