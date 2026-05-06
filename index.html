@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>やりたい仕事診断</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#101827" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="仕事診断" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a2e;
+      --panel2: #17233d;
+      --text: #f7fbff;
+      --muted: rgba(247,251,255,.72);
+      --accent: #7dd3fc;
+      --accent2: #c084fc;
+      --good: #86efac;
+      --line: rgba(255,255,255,.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+    }
+
+    body {
+      min-height: 100dvh;
+      background:
+        radial-gradient(circle at top left, rgba(125,211,252,.28), transparent 34%),
+        radial-gradient(circle at top right, rgba(192,132,252,.22), transparent 36%),
+        linear-gradient(180deg, #08101f, #0b1020 45%, #050816);
+    }
+
+    .app {
+      width: min(100%, 520px);
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding:
+        max(18px, env(safe-area-inset-top))
+        16px
+        max(20px, env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: .02em;
+      line-height: 1.12;
+    }
+
+    .badge {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.07);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.045));
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      padding: 18px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.32);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      padding: 22px 18px;
+    }
+
+    .hero h2 {
+      margin: 0 0 10px;
+      font-size: 27px;
+      line-height: 1.2;
+    }
+
+    .hero p, .muted {
+      color: var(--muted);
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .progress {
+      height: 10px;
+      background: rgba(255,255,255,.08);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+    }
+
+    .bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: .25s;
+    }
+
+    .qnum {
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 13px;
+      letter-spacing: .08em;
+    }
+
+    .question {
+      font-size: 22px;
+      font-weight: 850;
+      line-height: 1.35;
+      margin: 10px 0 16px;
+    }
+
+    .answers {
+      display: grid;
+      gap: 10px;
+    }
+
+    button {
+      appearance: none;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px 14px;
+      background: rgba(255,255,255,.07);
+      color: white;
+      font-size: 16px;
+      font-weight: 800;
+      text-align: left;
+    }
+
+    button:active {
+      transform: scale(.99);
+      background: rgba(255,255,255,.13);
+    }
+
+    .primary {
+      text-align: center;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      color: #06111f;
+      border: none;
+      font-size: 17px;
+    }
+
+    .ghost {
+      text-align: center;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .pillrow {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(125,211,252,.13);
+      border: 1px solid rgba(125,211,252,.24);
+      color: #dff7ff;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .result-title {
+      font-size: 28px;
+      margin: 0 0 6px;
+    }
+
+    .type {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 900;
+      letter-spacing: .08em;
+    }
+
+    .scoregrid {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .scoreline {
+      display: grid;
+      grid-template-columns: 92px 1fr 36px;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .track {
+      height: 10px;
+      background: rgba(255,255,255,.08);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 999px;
+    }
+
+    .jobs {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .job {
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 13px;
+    }
+
+    .job b {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .job span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    footer {
+      text-align: center;
+      color: rgba(255,255,255,.45);
+      font-size: 11px;
+      line-height: 1.4;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>やりたい仕事診断</h1>
+      <div class="badge">Work Fit Finder</div>
+    </header>
+
+    <section id="start" class="card hero">
+      <h2>あなたが燃える仕事の方向性を見つける。</h2>
+      <p>
+        24問に答えるだけで、価値観・得意な動き方・向いている仕事カテゴリをまとめます。
+        転職、就活、副業、進路の整理に使えます。
+      </p>
+      <div class="pillrow">
+        <div class="pill">3分診断</div>
+        <div class="pill">保存あり</div>
+        <div class="pill">スマホ対応</div>
+      </div>
+      <br>
+      <button class="primary" onclick="startQuiz()">診断を始める</button>
+    </section>
+
+    <section id="quiz" class="hidden">
+      <div class="progress"><div id="bar" class="bar"></div></div>
+      <div class="card">
+        <div id="qnum" class="qnum"></div>
+        <div id="question" class="question"></div>
+        <div id="answers" class="answers"></div>
+      </div>
+    </section>
+
+    <section id="result" class="hidden">
+      <div class="card">
+        <div class="type" id="typeLabel"></div>
+        <h2 class="result-title" id="resultTitle"></h2>
+        <p class="muted" id="summary"></p>
+
+        <div class="pillrow" id="keywords"></div>
+      </div>
+
+      <div class="card">
+        <h3>あなたの仕事軸</h3>
+        <div class="scoregrid" id="scoreGrid"></div>
+      </div>
+
+      <div class="card">
+        <h3>向いている仕事候補</h3>
+        <div class="jobs" id="jobs"></div>
+      </div>
+
+      <div class="card">
+        <h3>仕事選びで大事にすると良いこと</h3>
+        <p class="muted" id="advice"></p>
+      </div>
+
+      <button class="primary" onclick="shareResult()">結果をコピー</button>
+      <button class="ghost" onclick="resetAll()">もう一度診断する</button>
+    </section>
+
+    <footer>
+      この診断は自己理解の補助です。職業適性や心理状態を医学的・専門的に判定するものではありません。
+    </footer>
+  </main>
+
+<script>
+const axes = {
+  create: "創造",
+  help: "支援",
+  lead: "主導",
+  analyze: "分析",
+  stable: "安定",
+  free: "自由"
+};
+
+const questions = [
+  { t:"新しいアイデアを形にする作業にワクワクする", a:"create" },
+  { t:"誰かの悩みを聞いて助けるのが好き", a:"help" },
+  { t:"人をまとめたり、方向性を決めたりするのが得意", a:"lead" },
+  { t:"データや情報を整理して答えを出すのが好き", a:"analyze" },
+  { t:"安定した環境でコツコツ成果を出したい", a:"stable" },
+  { t:"時間や場所に縛られず働きたい", a:"free" },
+
+  { t:"文章、動画、デザイン、企画などで表現したい", a:"create" },
+  { t:"感謝されるとかなりモチベーションが上がる", a:"help" },
+  { t:"責任ある立場でも挑戦してみたい", a:"lead" },
+  { t:"感覚よりも根拠や仕組みを大事にしたい", a:"analyze" },
+  { t:"収入や生活リズムの安心感はかなり大事", a:"stable" },
+  { t:"会社員だけでなく副業・独立にも興味がある", a:"free" },
+
+  { t:"ゼロから何かを作る仕事に惹かれる", a:"create" },
+  { t:"教育、接客、医療、相談など人に関わる仕事に興味がある", a:"help" },
+  { t:"チームの成果を上げる役割にやりがいを感じる", a:"lead" },
+  { t:"調査、改善、戦略、数字を見る仕事に興味がある", a:"analyze" },
+  { t:"長く続けられる専門性を身につけたい", a:"stable" },
+  { t:"自分のペースで働けることが重要", a:"free" },
+
+  { t:"流行や世の中の変化を見て企画するのが好き", a:"create" },
+  { t:"相手の立場に立って考えることが多い", a:"help" },
+  { t:"目標を決めて周りを巻き込むのが好き", a:"lead" },
+  { t:"問題の原因を深掘りするのが好き", a:"analyze" },
+  { t:"ルールや手順が明確な方が力を出しやすい", a:"stable" },
+  { t:"毎日同じ作業より変化のある働き方が好き", a:"free" }
+];
+
+const choices = [
+  { text:"かなり当てはまる", point:5 },
+  { text:"やや当てはまる", point:4 },
+  { text:"どちらともいえない", point:3 },
+  { text:"あまり当てはまらない", point:2 },
+  { text:"全然当てはまらない", point:1 }
+];
+
+let index = 0;
+let scores = {};
+Object.keys(axes).forEach(k => scores[k] = 0);
+
+function startQuiz(){
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("quiz").classList.remove("hidden");
+  index = 0;
+  Object.keys(axes).forEach(k => scores[k] = 0);
+  showQuestion();
+}
+
+function showQuestion(){
+  const q = questions[index];
+  document.getElementById("qnum").textContent = `QUESTION ${index+1} / ${questions.length}`;
+  document.getElementById("question").textContent = q.t;
+  document.getElementById("bar").style.width = `${(index/questions.length)*100}%`;
+
+  const box = document.getElementById("answers");
+  box.innerHTML = "";
+  choices.forEach(c => {
+    const btn = document.createElement("button");
+    btn.textContent = c.text;
+    btn.onclick = () => answer(c.point);
+    box.appendChild(btn);
+  });
+}
+
+function answer(point){
+  const q = questions[index];
+  scores[q.a] += point;
+  index++;
+  if(index >= questions.length){
+    finish();
+  } else {
+    showQuestion();
+  }
+}
+
+function finish(){
+  document.getElementById("bar").style.width = "100%";
+  document.getElementById("quiz").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+
+  const sorted = Object.entries(scores).sort((a,b)=>b[1]-a[1]);
+  const top = sorted[0][0];
+  const second = sorted[1][0];
+
+  const result = getResult(top, second);
+  document.getElementById("typeLabel").textContent = `あなたの仕事タイプ`;
+  document.getElementById("resultTitle").textContent = result.title;
+  document.getElementById("summary").textContent = result.summary;
+  document.getElementById("advice").textContent = result.advice;
+
+  const kw = document.getElementById("keywords");
+  kw.innerHTML = "";
+  result.keywords.forEach(k => {
+    const el = document.createElement("div");
+    el.className = "pill";
+    el.textContent = k;
+    kw.appendChild(el);
+  });
+
+  const grid = document.getElementById("scoreGrid");
+  grid.innerHTML = "";
+  Object.entries(scores).forEach(([key, val]) => {
+    const percent = Math.round((val / 20) * 100);
+    const row = document.createElement("div");
+    row.className = "scoreline";
+    row.innerHTML = `
+      <div>${axes[key]}</div>
+      <div class="track"><div class="fill" style="width:${percent}%"></div></div>
+      <div>${percent}</div>
+    `;
+    grid.appendChild(row);
+  });
+
+  const jobs = document.getElementById("jobs");
+  jobs.innerHTML = "";
+  result.jobs.forEach(j => {
+    const el = document.createElement("div");
+    el.className = "job";
+    el.innerHTML = `<b>${j.name}</b><span>${j.desc}</span>`;
+    jobs.appendChild(el);
+  });
+
+  const save = {
+    date: new Date().toISOString(),
+    title: result.title,
+    summary: result.summary,
+    scores
+  };
+  localStorage.setItem("work-fit-finder-result", JSON.stringify(save));
+}
+
+function getResult(top, second){
+  const data = {
+    create: {
+      title:"アイデアを形にするクリエイター型",
+      summary:"あなたは、決められたことをこなすだけより、自分の発想を形にして価値を生む仕事で力を出しやすいタイプです。",
+      keywords:["企画","表現","ものづくり","発信","新規性"],
+      jobs:[
+        {name:"企画職・商品企画", desc:"新しいサービスや商品の方向性を考える仕事。"},
+        {name:"デザイナー・動画/文章クリエイター", desc:"表現や世界観づくりを仕事にしやすい領域。"},
+        {name:"マーケティング", desc:"人の反応を見ながら企画を改善していく仕事。"}
+      ],
+      advice:"自由度と裁量がある環境を選ぶと伸びやすいです。一方で、納期や数字など現実に落とし込む力を鍛えると一気に強くなります。"
+    },
+    help: {
+      title:"人の役に立つサポーター型",
+      summary:"あなたは、人の変化や感謝を感じられる仕事でやりがいを得やすいタイプです。",
+      keywords:["支援","相談","教育","接客","共感"],
+      jobs:[
+        {name:"カウンセラー・キャリア支援", desc:"相手の悩みや進路に寄り添う仕事。"},
+        {name:"教育・講師・コーチ", desc:"人の成長を支える仕事。"},
+        {name:"接客・カスタマーサクセス", desc:"相手の課題を解決して満足度を上げる仕事。"}
+      ],
+      advice:"誰かのためになっている実感がある職場を選ぶと続きやすいです。抱え込みすぎない仕組みも大事です。"
+    },
+    lead: {
+      title:"人を動かすリーダー型",
+      summary:"あなたは、目標を決めて周りを巻き込み、成果を出す仕事で燃えやすいタイプです。",
+      keywords:["リーダー","営業","経営","推進","責任"],
+      jobs:[
+        {name:"営業・事業開発", desc:"人を動かし、成果を作る力を活かせます。"},
+        {name:"プロジェクトマネージャー", desc:"チームや進行をまとめる仕事。"},
+        {name:"起業・店舗運営", desc:"自分で方針を決めて挑戦する働き方。"}
+      ],
+      advice:"裁量と責任がある環境で伸びやすいです。人を動かすだけでなく、聞く力を磨くと信頼が増します。"
+    },
+    analyze: {
+      title:"仕組みで解く分析家型",
+      summary:"あなたは、感覚だけでなく情報を整理し、原因や法則を見つける仕事で力を発揮しやすいタイプです。",
+      keywords:["分析","改善","論理","戦略","調査"],
+      jobs:[
+        {name:"データ分析・リサーチ", desc:"数字や情報から意思決定を支える仕事。"},
+        {name:"エンジニア・業務改善", desc:"仕組みを作って問題を解決する仕事。"},
+        {name:"コンサル・戦略職", desc:"課題を整理し、解決策を提案する仕事。"}
+      ],
+      advice:"知的好奇心を満たせる環境が向いています。完璧に考えすぎず、早く試す習慣を持つと強いです。"
+    },
+    stable: {
+      title:"専門性を積み上げる安定職人型",
+      summary:"あなたは、落ち着いた環境でスキルや信頼を積み上げる仕事に向いています。",
+      keywords:["安定","専門性","継続","信頼","丁寧"],
+      jobs:[
+        {name:"事務・経理・管理部門", desc:"正確性と継続力を活かしやすい仕事。"},
+        {name:"資格職・専門職", desc:"積み上げた知識が価値になりやすい領域。"},
+        {name:"インフラ・品質管理", desc:"安定運用やミス防止に関わる仕事。"}
+      ],
+      advice:"長く続けられる環境と明確な評価基準がある職場を選ぶと安心して伸びます。変化が少なすぎると飽きる場合は小さな成長目標を置くと良いです。"
+    },
+    free: {
+      title:"自由に広げる独立探求型",
+      summary:"あなたは、固定された型よりも、自分のペースで試行錯誤できる働き方で力を出しやすいタイプです。",
+      keywords:["自由","副業","独立","探求","変化"],
+      jobs:[
+        {name:"フリーランス・副業", desc:"自分の裁量で働き方を作りやすい領域。"},
+        {name:"Web制作・SNS運用", desc:"場所に縛られにくく、個人でも始めやすい仕事。"},
+        {name:"新規事業・スタートアップ", desc:"変化の多い環境で挑戦できます。"}
+      ],
+      advice:"自由度の高い働き方が合いますが、収入や生活リズムの土台も大事です。小さく試して勝ち筋を見つける進め方が向いています。"
+    }
+  };
+
+  const result = data[top];
+  result.summary += ` 特に「${axes[top]}」の傾向が強く、次に「${axes[second]}」もあなたの仕事選びに影響しています。`;
+  return result;
+}
+
+function shareResult(){
+  const title = document.getElementById("resultTitle").textContent;
+  const summary = document.getElementById("summary").textContent;
+  const text = `【やりたい仕事診断】\n${title}\n${summary}`;
+  navigator.clipboard.writeText(text).then(() => alert("結果をコピーしました"));
+}
+
+function resetAll(){
+  document.getElementById("result").classList.add("hidden");
+  document.getElementById("start").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+}
+</script>
+</body>
+</html>
